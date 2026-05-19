@@ -354,3 +354,4 @@ public class EnemyNavMeshAI : MonoBehaviour
         Gizmos.DrawWireSphere (transform.position, loseRange);
     }
 }
+//heh, just for the GitHub
