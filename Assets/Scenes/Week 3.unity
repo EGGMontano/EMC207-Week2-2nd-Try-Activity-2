@@ -928,7 +928,7 @@ MonoBehaviour:
   chaseStoppingDistance: 1
   waypointReachDistance: 0.5
   waitTimeAtWaypoint: 1.5
-  randomPatrol: 0
+  randomPatrol: 1
   facePlayerSpeed: 8
   speedParameter: Speed
   animationDampTime: 0.1
@@ -1152,7 +1152,7 @@ Transform:
   m_GameObject: {fileID: 1958469342}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.15615, y: 0.77077, z: -7.85}
+  m_LocalPosition: {x: -0.15615, y: 3.5, z: -16.98}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1205,7 +1205,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 0}
+  m_NavMeshData: {fileID: 23800000, guid: 490a30a159694a04687a37f030229e9d, type: 2}
   m_BuildHeightMesh: 0
 --- !u!4 &2054922132
 Transform:

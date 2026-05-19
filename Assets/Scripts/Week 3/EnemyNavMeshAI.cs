@@ -1,4 +1,3 @@
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -51,7 +50,7 @@ public class EnemyNavMeshAI : MonoBehaviour
         }
     }
 
-    private void Awake()
+    private void Awake()                                                    //always put your get components in Awake()
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
@@ -59,15 +58,23 @@ public class EnemyNavMeshAI : MonoBehaviour
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void Start()                                                            // changing variables
     {
-            
+            if (HasPatrolPoints)
+            {
+                ChangeState(EnemyStates.Patrol);
+            }
+            else
+            {
+                ChangeState(EnemyStates.Idle);
+            }
     }
 
     // Update is called once per frame
     void Update()
     {
         CheckForPlayer();
+        UpdateAnimation();
         //if patrol point exists, start Patrol State
         switch (currentState)
         {
@@ -85,7 +92,9 @@ public class EnemyNavMeshAI : MonoBehaviour
 
     private void CheckForPlayer()
     {
+        //measure distance between the enemy and player
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        
         if (currentState != EnemyStates.Chase && distanceToPlayer <= chaseRange)
         {
             ChangeState(EnemyStates.Chase);
@@ -134,46 +143,107 @@ public class EnemyNavMeshAI : MonoBehaviour
     //method runs once the enemy enters IdleState
     private void EnterIdle()
     {
-        //Prevents/Stops NavMeshAgent from moving
+        //Prevents/Stops the NavMeshAgent from moving
         agent.isStopped = true;
-        //Clear current tasks
+        //Clears current paths
         agent.ResetPath();
         //Reset wait timer
-        waitTimer = 0;
+        waitTimer = 0f;
     }
 
     private void UpdateIdle()
     {
-
+        //if the NavMeshAgent does anything while idle
     }
 
-    //PatrolState
+    //PatrolStates
     private void EnterPatrol()
     {
+        //Allows the NavMeshAgent to move
         agent.isStopped = false;
+        //Sets the speed to walking speed
         agent.speed = walkSpeed;
+        //Stops the AI at a certain distance during patrol
         agent.stoppingDistance = patrolStoppingDistance;
-        waitTimer = 0;
-
+        waitTimer = 0f;
+        //Moves toward the current Patrol Point
+        SetCurrentPatrolDestination();
     }
 
-    private void UpdatePatrol()
+    private void UpdatePatrol()     //while patrolling
     {
+        //If the Patrol Points were removed, change to idle
+        if (!HasPatrolPoints)
+        {
+            ChangeState(EnemyStates.Idle);
+            return;
+        }
+        //If the NavMeshAgent has not reached its destination, just keep patrolling
+        if (!ReachedDestination())
+        {
+            return;
+        }
 
+        //If the NavMeshAgent has reached its Patrol Point
+        agent.isStopped = true;
+        waitTimer += Time.deltaTime;
+
+        //If the NavMeshAgent has waited enough on the Patrol Point
+        if (waitTimer >= waitTimeAtWaypoint)
+        {
+            //Reset wait timer
+            waitTimer = 0;
+            ChooseNextPatrolPoint();
+
+            //Makes AI able to move again
+            agent.isStopped = false;
+            SetCurrentPatrolDestination();
+        }
     }
 
     //ChaseState
     private void EnterChase()
     {
+        //Allows the NavMeshAgent to move
         agent.isStopped = false;
+        //Sets the speed to running/chase speed
         agent.speed = runSpeed;
+        //Set how close the enemy should get to the player
         agent.stoppingDistance = chaseStoppingDistance;
+        //Reset wait timer
         waitTimer = 0;
     }
 
     private void UpdateChase()
     {
+        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        //If the player no longer exists
+        if (player == null)
+        {
+            if(HasPatrolPoints)
+            {
+                ChangeState(EnemyStates.Patrol);
+            }
+            else
+            {
+                ChangeState(EnemyStates.Idle);
+            }
+            return;
+        }
+        
 
+        //if the enemy is close to player
+        if (distanceToPlayer <= chaseStoppingDistance)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+            //Attack State
+        }
+        else
+        {
+            agent.isStopped = false;
+            agent.SetDestination(player.position);
+        }
     }
 
     //Checks if it has reached its current destination
@@ -203,7 +273,18 @@ public class EnemyNavMeshAI : MonoBehaviour
         {
             return;
         }
+
+
         Transform point = patrolPoints[patrolIndex];
+
+
+        if (randomPatrol && patrolPoints.Length > 1)
+        {
+            int nextIndex = patrolIndex;
+
+        }
+
+        
         if (point == null)
         {
             ChooseNextPatrolPoint();
@@ -218,7 +299,50 @@ public class EnemyNavMeshAI : MonoBehaviour
     //Chooses the next patrol point
     private void ChooseNextPatrolPoint()
     {
+        //logic for random patrolling
+        if (!HasPatrolPoints)
+        {
+            return;
+        }
 
+        if (randomPatrol && patrolPoints.Length > 1)
+        {
+            int nextIndex = patrolIndex;
+            while (nextIndex == patrolIndex)
+            {
+                nextIndex = Random.Range(0, patrolPoints.Length);
+            }
+            patrolIndex = nextIndex;
+        }
+        else
+        {
+            //move to next Patrol Point
+            patrolIndex++;
+            //resets the Patrol Pont to zero
+            if (patrolIndex >= patrolPoints.Length)
+            {
+                patrolIndex = 0;
+            }
+        }
+    }
+
+    //ANIMATIONS
+    private void UpdateAnimation()
+    {
+        float animationSpeed = 0;
+
+        //if agent is moving
+        bool isMoving = agent.velocity.magnitude > 0.05 && agent.isStopped;
+        if (currentState == EnemyStates.Patrol && isMoving)
+        {
+            animationSpeed = 0.5f;
+        }
+        else if (currentState == EnemyStates.Chase && isMoving)
+        {
+            animationSpeed = 1f;
+        }
+
+        animator.SetFloat(speedParameter, animationSpeed, animationDampTime, Time.deltaTime);
     }
 
     private void OnDrawGizmos()
