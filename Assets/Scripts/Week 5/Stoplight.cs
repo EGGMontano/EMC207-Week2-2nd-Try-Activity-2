@@ -22,13 +22,13 @@ public class Stoplight : MonoBehaviour
         {
             isGreen = false;
             timer = 0f;
-            Debug.Log("RED LIGHT");
+            Debug.Log("GREEN LIGHT");
         }
         else if (!isGreen && timer >= redTime)
         {
             isGreen = true;
             timer = 0f;
-            Debug.Log("GREEN LIGHT");
+            Debug.Log("RED LIGHT");
         }
     }
 }
